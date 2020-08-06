@@ -1,2 +1,2 @@
 # SqlQuery
-Common Query Template
+Common Query Template About SQL Server
