@@ -1,0 +1,25 @@
+//获取数据库各个表占用的空间
+declare @tabSize table(name nvarchar(100),rows char(20),reserved varchar(18) ,data varchar(18) ,index_size varchar(18) ,nnused varchar(18))
+
+insert into @tabSize exec sp_msforeachtable 'sp_spaceused ''?'''
+
+select * from @tabSize
+order by convert(int,replace(data,'KB','')) desc,2 desc
+
+
+
+//获取各个数据库占用的空间
+DECLARE @insSize TABLE(dbName sysname,checkTime VARCHAR(19),dbSize VARCHAR(50),logSize VARCHAR(50))
+
+INSERT INTO @insSize ( dbName, checkTime, dbSize, logSize )
+EXEC sp_msforeachdb 'select ''?'' dbName,CONVERT(VARCHAR(19),GETDATE(),120) checkTime,LTRIM(STR(SUM(CASE WHEN RIGHT(FILENAME,3)<>''ldf'' THEN convert (dec (15,2),size) * 8 / 1024 ELSE 0 END),15,2)+'' MB'') dbSize,  
+                 LTRIM(STR(SUM(CASE WHEN RIGHT(FILENAME,3)=''ldf''  THEN convert (dec (15,2),size) * 8 / 1024 ELSE 0 END),15,2)+'' MB'') logSize from ?.dbo.sysfiles'
+
+SELECT 
+	   dbName
+	  ,checkTime
+	  ,dbSize AS dbSize_MB
+	  ,logSize AS logSize_MB
+	  ,STR(CONVERT(decimal(15,2),REPLACE(dbSize,'MB',''))/1024,15,2) + ' GB' AS dbSize_GB
+	  ,STR(CONVERT(decimal(15,2),REPLACE(logSize,'MB',''))/1024,15,2) + ' GB' AS logSize_GB
+FROM @insSize ORDER BY CONVERT(DECIMAL,LTRIM(RTRIM(SUBSTRING(dbSize,1,LEN(dbSize)-2)))) DESC
