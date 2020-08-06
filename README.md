@@ -1,0 +1,2 @@
+# SqlQuery
+Common Query Template
